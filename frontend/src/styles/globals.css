@@ -1,0 +1,117 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: "Satoshi";
+  src: url("/fonts/Satoshi-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Erode";
+  src: url("/fonts/Erode-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+
+@theme {
+  --color-paper: #f4f0e7;
+  --color-ink: #182231;
+  --color-amber: #e59a18;
+  --color-map-green: #365c4c;
+  --color-line: #d7d0c3;
+  --color-muted: #6f756c;
+  --font-satoshi: "Satoshi", sans-serif;
+  --font-erode: "Erode", serif;
+  --shadow-roadbook: 0 18px 45px rgb(24 34 49 / 0.16);
+  --radius-route: 0.2rem 0.7rem 0.2rem 0.7rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: var(--color-paper);
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.opening-grid {
+  display: grid;
+  min-height: calc(100vh - 65px);
+  grid-template-columns: minmax(22rem, 2fr) minmax(0, 3fr);
+}
+
+.opening-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(2rem, 6vw, 6rem);
+  border-right: 1px solid var(--color-line);
+}
+
+.opening-copy h1 {
+  max-width: 9ch;
+  margin: 0.5rem 0 1rem;
+  font: 400 clamp(3rem, 6vw, 6.5rem) / 0.9 var(--font-erode);
+  letter-spacing: -0.05em;
+}
+
+.opening-copy p:not(.eyebrow) {
+  max-width: 34rem;
+  color: var(--color-muted);
+  font: 400 1.1rem / 1.55 var(--font-erode);
+}
+
+.eyebrow {
+  color: #a76000;
+  font: 700 0.72rem / 1 var(--font-satoshi);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.empty-map {
+  display: grid;
+  place-content: center;
+  gap: 1rem;
+  padding: 2rem;
+  overflow: hidden;
+  background:
+    radial-gradient(#7e8d80 0.7px, transparent 0.7px) 0 0 / 13px 13px,
+    #cad9cc;
+  color: var(--color-map-green);
+  text-align: center;
+}
+
+.empty-map img {
+  width: min(75%, 34rem);
+  margin-inline: auto;
+}
+
+@media (max-width: 800px) {
+  .opening-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .opening-copy {
+    border-right: 0;
+    border-bottom: 1px solid var(--color-line);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
