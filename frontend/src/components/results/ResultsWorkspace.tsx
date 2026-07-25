@@ -1,6 +1,8 @@
 import { domMax, LazyMotion, m } from "motion/react";
 import { useState } from "react";
 
+import { DailyLogSheet } from "@/components/logs/DailyLogSheet";
+import { PrintToolbar } from "@/components/logs/PrintToolbar";
 import { Directions } from "@/components/results/Directions";
 import { Itinerary } from "@/components/results/Itinerary";
 import { RouteMap } from "@/components/results/RouteMap";
@@ -32,6 +34,17 @@ export function ResultsWorkspace({ plan }: { plan: TripPlanResponse }) {
           onSelectEvent={selectEvent}
         />
         <Directions plan={plan} />
+        <section className="daily-logs" aria-label="Daily log sheets">
+          <PrintToolbar />
+          {plan.daily_logs.map((log) => (
+            <DailyLogSheet
+              key={log.date}
+              log={log}
+              totalLogs={plan.daily_logs.length}
+              homeTimezone={plan.meta.home_terminal_timezone}
+            />
+          ))}
+        </section>
       </m.section>
     </LazyMotion>
   );
