@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import { TripForm } from "@/components/planner/TripForm";
+import { ApiClientError } from "@/lib/api/client";
 
 vi.mock("@/hooks/useLocationSearch", () => ({
   useLocationSearch: () => ({
@@ -81,5 +82,27 @@ describe("TripForm", () => {
     await user.click(screen.getByRole("button", { name: /build trip plan/i }));
 
     expect(await screen.findByText(/select a current location/i)).toBeInTheDocument();
+  });
+
+  it("places a server validation error beside its matching field", () => {
+    render(
+      <TripForm
+        onPlan={vi.fn()}
+        isPlanning={false}
+        serverError={
+          new ApiClientError(
+            "Select a United States location.",
+            "VALIDATION_ERROR",
+            "pickup_location",
+            false,
+            400,
+          )
+        }
+      />,
+    );
+
+    expect(
+      screen.getByText("Select a United States location."),
+    ).toBeInTheDocument();
   });
 });

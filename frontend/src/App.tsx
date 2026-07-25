@@ -1,58 +1,108 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-import routePlanning from "@/assets/route-planning.svg";
+import { PlanningProgress } from "@/components/planner/PlanningProgress";
 import { TripForm } from "@/components/planner/TripForm";
+import { ResultsWorkspace } from "@/components/results/ResultsWorkspace";
+import { EmptyState } from "@/components/states/EmptyState";
+import { ErrorAlert } from "@/components/states/ErrorAlert";
+import { Alert } from "@/components/ui/alert";
 import { ApiClientError, planTrip } from "@/lib/api/client";
 import type { TripPlanRequest, TripPlanResponse } from "@/lib/api/types";
 
-export function App() {
-  const [isPlanning, setIsPlanning] = useState(false);
-  const [plan, setPlan] = useState<TripPlanResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
+const VISIBLE_FORM_FIELDS = new Set([
+  "current_location",
+  "pickup_location",
+  "dropoff_location",
+  "current_cycle_used_hours",
+]);
 
-  const handlePlan = async (request: TripPlanRequest) => {
+export function App() {
+  const [plan, setPlan] = useState<TripPlanResponse | null>(null);
+  const [error, setError] = useState<ApiClientError | null>(null);
+  const [isPlanning, setIsPlanning] = useState(false);
+  const [stage, setStage] = useState(0);
+  const lastRequest = useRef<TripPlanRequest | null>(null);
+  const activeController = useRef<AbortController | null>(null);
+
+  useEffect(() => () => activeController.current?.abort(), []);
+
+  const runPlan = async (request: TripPlanRequest) => {
+    activeController.current?.abort();
+    const controller = new AbortController();
+    activeController.current = controller;
+    lastRequest.current = request;
     setIsPlanning(true);
+    setPlan(null);
     setError(null);
+    setStage(0);
+    const stageTimer = window.setInterval(
+      () => setStage((current) => Math.min(2, current + 1)),
+      650,
+    );
     try {
-      setPlan(await planTrip(request));
+      const result = await planTrip(request, controller.signal);
+      setPlan(result);
+      window.requestAnimationFrame(() => {
+        document
+          .querySelector<HTMLElement>(".results-workspace")
+          ?.focus({ preventScroll: true });
+        document
+          .querySelector(".results-workspace")
+          ?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+      });
     } catch (caught) {
+      if (controller.signal.aborted) return;
       setError(
         caught instanceof ApiClientError
-          ? caught.message
-          : "The trip plan could not be built.",
+          ? caught
+          : new ApiClientError(
+              "An unexpected error occurred.",
+              "INTERNAL_ERROR",
+              null,
+              true,
+              500,
+            ),
       );
     } finally {
-      setIsPlanning(false);
+      window.clearInterval(stageTimer);
+      if (!controller.signal.aborted) setIsPlanning(false);
     }
   };
+  const hasInlineFieldError = VISIBLE_FORM_FIELDS.has(error?.field ?? "");
 
   return (
     <main className="min-h-screen bg-paper text-ink">
-      <header className="flex items-center justify-between border-b border-line px-6 py-4">
-        <a className="font-satoshi text-sm tracking-tight" href="/">
-          <span className="mr-2 inline-block size-3 rounded-route bg-amber" />
+      <header className="app-header">
+        <a className="brand" href="/">
+          <span />
           ROUTELOG
         </a>
-        <p className="font-erode text-sm text-muted">
-          FMCSA-aware trip planning
-        </p>
+        <p>FMCSA-aware trip planning</p>
       </header>
-      <section className="opening-grid">
+      <section className={`opening-grid${plan ? " plan-complete" : ""}`}>
         <div className="opening-copy">
           <p className="eyebrow">Plan your run</p>
           <h1>A clear road ahead.</h1>
           <p>
-            Build a truck route, place required stops, and generate a daily duty
-            log for every day of the trip.
+            Build a truck route, place required stops, and generate a daily
+            duty log for every day of the trip.
           </p>
-          <TripForm onPlan={handlePlan} isPlanning={isPlanning} />
-          {error && <p role="alert">{error}</p>}
-          {plan && <p role="status">Trip plan ready.</p>}
+          <TripForm
+            onPlan={runPlan}
+            isPlanning={isPlanning}
+            serverError={error}
+          />
+          {error && !hasInlineFieldError && (
+            <ErrorAlert
+              error={error}
+              onRetry={() => {
+                if (lastRequest.current) void runPlan(lastRequest.current);
+              }}
+            />
+          )}
         </div>
-        <div className="empty-map" aria-label="Route planning preview">
-          <img src={routePlanning} alt="" />
-          <p>Your route and planned rests will appear here.</p>
-        </div>
+        {!plan &&
+          (isPlanning ? <PlanningProgress stage={stage} /> : <EmptyState />)}
       </section>
       <section
         id="planning-assumptions"
@@ -62,10 +112,21 @@ export function App() {
         <h2 id="planning-assumptions-title">Planning assumptions</h2>
         <p>
           Solo property carrier · aggregate 70 / 8 cycle only · fresh shift
-          clocks · no adverse or split-sleeper exceptions · fixed home-terminal
-          UTC offset
+          clocks · no adverse or split-sleeper exceptions · fixed
+          home-terminal UTC offset
         </p>
       </section>
+      {plan?.meta.warnings.map((warning) => (
+        <Alert key={warning} title="Planning assumption">
+          <p>{warning}</p>
+        </Alert>
+      ))}
+      {plan && <ResultsWorkspace plan={plan} />}
+      <footer className="app-footer">
+        Route and timing data are estimates. Public provider quotas may
+        interrupt planning. RouteLog creates advisory planning copies, not
+        certified ELD records.
+      </footer>
     </main>
   );
 }

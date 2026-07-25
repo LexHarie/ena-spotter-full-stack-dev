@@ -6,6 +6,7 @@ import { z } from "zod";
 import { CycleMeter } from "@/components/planner/CycleMeter";
 import { LocationCombobox } from "@/components/planner/LocationCombobox";
 import { Button } from "@/components/ui/button";
+import type { ApiClientError } from "@/lib/api/client";
 import type { LocationCandidate, TripPlanRequest } from "@/lib/api/types";
 import { getTripStartContext } from "@/lib/time";
 
@@ -43,9 +44,10 @@ type FormValues = z.output<typeof formSchema>;
 interface Props {
   onPlan: (request: TripPlanRequest) => void;
   isPlanning: boolean;
+  serverError?: ApiClientError | null;
 }
 
-export function TripForm({ onPlan, isPlanning }: Props) {
+export function TripForm({ onPlan, isPlanning, serverError }: Props) {
   const {
     control,
     register,
@@ -62,6 +64,10 @@ export function TripForm({ onPlan, isPlanning }: Props) {
     },
   });
   const cycleUsed = Number(watch("current_cycle_used_hours"));
+  const fieldError = (name: keyof FormValues) =>
+    errors[name]?.message ??
+    (serverError?.field === name ? serverError.message : undefined);
+  const cycleError = fieldError("current_cycle_used_hours");
 
   const submit = (values: FormValues) => {
     const context = getTripStartContext();
@@ -98,7 +104,7 @@ export function TripForm({ onPlan, isPlanning }: Props) {
               label={label}
               value={field.value}
               onChange={field.onChange}
-              error={errors[name]?.message}
+              error={fieldError(name)}
             />
           )}
         />
@@ -113,21 +119,19 @@ export function TripForm({ onPlan, isPlanning }: Props) {
           min="0"
           max="70"
           step="0.25"
-          aria-invalid={Boolean(errors.current_cycle_used_hours)}
+          aria-invalid={Boolean(cycleError)}
           aria-describedby={
-            errors.current_cycle_used_hours
-              ? "current-cycle-used-error"
-              : undefined
+            cycleError ? "current-cycle-used-error" : undefined
           }
           {...register("current_cycle_used_hours", { valueAsNumber: true })}
         />
-        {errors.current_cycle_used_hours && (
+        {cycleError && (
           <p
             id="current-cycle-used-error"
             role="alert"
             className="field-error"
           >
-            {errors.current_cycle_used_hours.message}
+            {cycleError}
           </p>
         )}
       </div>

@@ -652,6 +652,123 @@ input {
   }
 }
 
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--color-line);
+}
+
+.opening-grid.plan-complete {
+  grid-template-columns: minmax(0, 42rem);
+}
+
+.app-header p {
+  margin: 0;
+  color: var(--color-muted);
+  font: 400 0.85rem/1 var(--font-erode);
+}
+
+.brand {
+  color: var(--color-ink);
+  font: 700 0.85rem/1 var(--font-satoshi);
+  text-decoration: none;
+}
+
+.brand span {
+  display: inline-block;
+  width: 0.75rem;
+  height: 0.75rem;
+  margin-right: 0.5rem;
+  border-radius: var(--radius-route);
+  background: var(--color-amber);
+}
+
+.planning-progress {
+  display: grid;
+  min-height: 28rem;
+  place-content: center;
+  background:
+    radial-gradient(#7e8d80 0.7px, transparent 0.7px) 0 0 / 13px 13px,
+    #cad9cc;
+}
+
+.planning-progress div {
+  min-width: min(80vw, 22rem);
+  padding: 1.5rem;
+  border: 1px solid rgb(24 34 49 / 0.14);
+  border-radius: 0.8rem;
+  background: rgb(255 253 248 / 0.9);
+  box-shadow: var(--shadow-roadbook);
+}
+
+.planning-progress span,
+.planning-progress strong {
+  display: block;
+}
+
+.planning-progress span {
+  color: #a76000;
+  font: 700 0.65rem/1 var(--font-satoshi);
+  letter-spacing: 0.1em;
+}
+
+.planning-progress strong {
+  margin-top: 0.6rem;
+  font: 400 1.5rem/1.1 var(--font-erode);
+}
+
+.alert {
+  margin: 1rem;
+  padding: 1rem;
+  border: 1px solid #cbd8cd;
+  border-radius: 0.7rem;
+  background: #e8eee8;
+}
+
+.alert p {
+  margin: 0.4rem 0 0.8rem;
+  font: 400 0.9rem/1.4 var(--font-erode);
+}
+
+.results-workspace:focus {
+  outline: none;
+}
+
+.app-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--color-line);
+  color: var(--color-muted);
+  font: 400 0.72rem/1.4 var(--font-erode);
+}
+
+@media (max-width: 600px) {
+  .app-header p {
+    display: none;
+  }
+
+  .opening-copy {
+    padding: 2rem 1rem;
+  }
+
+  .itinerary,
+  .directions,
+  .daily-logs {
+    padding-inline: 1rem;
+  }
+
+  .remarks-header,
+  .remark-entry {
+    grid-template-columns: 3.8rem 1fr;
+  }
+
+  .remarks-header span:last-child,
+  .remark-entry span:last-child {
+    display: none;
+  }
+}
+
 @media print {
   @page {
     size: letter portrait;
