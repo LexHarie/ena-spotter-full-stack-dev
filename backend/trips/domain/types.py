@@ -119,3 +119,12 @@ class DailyLog:
     cycle_used_start_minutes: int
     cycle_added_minutes: int
     cycle_remaining_end_minutes: int
+
+
+@dataclass(frozen=True)
+class PlanningResult:
+    request: TripRequest
+    route: NormalizedRoute
+    events: tuple[DutyEvent, ...]
+    daily_logs: tuple[DailyLog, ...]
+    warnings: tuple[str, ...]

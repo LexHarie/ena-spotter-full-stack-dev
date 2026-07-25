@@ -1,12 +1,23 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from decimal import Decimal
 from math import isfinite
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from rest_framework import serializers
 
-from trips.domain.types import Coordinate, Location, TripRequest
-from trips.domain.units import ceil_datetime_to_quarter, hours_to_minutes
+from trips.domain.types import (
+    Coordinate,
+    DutyStatus,
+    EventKind,
+    Location,
+    PlanningResult,
+    TripRequest,
+)
+from trips.domain.units import (
+    ceil_datetime_to_quarter,
+    hours_to_minutes,
+    meters_to_miles,
+)
 
 
 class LocationSerializer(serializers.Serializer):
@@ -100,3 +111,157 @@ class TripPlanRequestSerializer(serializers.Serializer):
             home_terminal_timezone=data["home_terminal_timezone"],
             fixed_utc_offset_minutes=int(offset.total_seconds() // 60),
         )
+
+
+def _location_data(location: Location) -> dict:
+    return {
+        "id": location.id,
+        "label": location.label,
+        "longitude": location.coordinate.longitude,
+        "latitude": location.coordinate.latitude,
+        "country_code": location.country_code,
+    }
+
+
+def serialize_plan(result: PlanningResult) -> dict:
+    route = result.route
+    total_duration = sum(event.duration_minutes for event in result.events)
+    duty_totals = {
+        status: sum(
+            event.duration_minutes for event in result.events if event.duty_status == status
+        )
+        for status in DutyStatus
+    }
+    longitudes = [point.longitude for point in route.geometry]
+    latitudes = [point.latitude for point in route.geometry]
+    stop_kinds = {
+        EventKind.PICKUP,
+        EventKind.DROPOFF,
+        EventKind.FUEL,
+        EventKind.BREAK,
+        EventKind.DAILY_REST,
+        EventKind.CYCLE_RESTART,
+    }
+    events = [
+        {
+            "id": event.id,
+            "kind": event.kind,
+            "duty_status": event.duty_status,
+            "start_at": event.start_at.isoformat(),
+            "end_at": event.end_at.isoformat(),
+            "duration_minutes": event.duration_minutes,
+            "route_start_m": event.route_start_m,
+            "route_end_m": event.route_end_m,
+            "location": _location_data(event.location),
+            "remark": event.remark,
+        }
+        for event in result.events
+    ]
+    return {
+        "meta": {
+            "generated_at": datetime.now(UTC).isoformat(),
+            "rule_set_version": "property-70-8-v1",
+            "home_terminal_timezone": result.request.home_terminal_timezone,
+            "fixed_utc_offset_minutes": result.request.fixed_utc_offset_minutes,
+            "assumptions": [
+                "Solo property-carrying driver",
+                "70 hours in 8 days",
+                "Fresh 11-hour driving and 14-hour shift clocks",
+                "Thirty non-driving minutes after 8 driving hours",
+                "Ten consecutive sleeper-berth hours reset shift clocks",
+                "Thirty-four off-duty hours reset aggregate cycle usage",
+                "No adverse-condition extension",
+                "One hour each for pickup and drop-off",
+                "Thirty-minute fuel stop before every 1,000 miles",
+                "Trip-start home-terminal UTC offset remains fixed",
+            ],
+            "warnings": list(result.warnings),
+        },
+        "summary": {
+            "starts_at": result.events[0].start_at.isoformat(),
+            "ends_at": result.events[-1].end_at.isoformat(),
+            "distance_m": route.distance_m,
+            "distance_miles": str(meters_to_miles(route.distance_m)),
+            "driving_minutes": sum(
+                event.duration_minutes for event in result.events if event.kind == EventKind.DRIVING
+            ),
+            "on_duty_not_driving_minutes": duty_totals[DutyStatus.ON_DUTY],
+            "off_duty_minutes": duty_totals[DutyStatus.OFF_DUTY],
+            "sleeper_berth_minutes": duty_totals[DutyStatus.SLEEPER_BERTH],
+            "total_duration_minutes": total_duration,
+            "cycle_used_start_minutes": result.request.cycle_used_minutes,
+            "cycle_used_end_minutes": result.events[-1].cycle_used_after_minutes,
+            "cycle_restarts": sum(event.kind == EventKind.CYCLE_RESTART for event in result.events),
+            "log_days": len(result.daily_logs),
+            "fuel_stops": sum(event.kind == EventKind.FUEL for event in result.events),
+            "rest_stops": sum(
+                event.kind in {EventKind.DAILY_REST, EventKind.CYCLE_RESTART}
+                for event in result.events
+            ),
+        },
+        "route": {
+            "bounds": {
+                "west": min(longitudes),
+                "south": min(latitudes),
+                "east": max(longitudes),
+                "north": max(latitudes),
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [[point.longitude, point.latitude] for point in route.geometry],
+            },
+            "legs": [
+                {
+                    "from": _location_data(leg.start),
+                    "to": _location_data(leg.end),
+                    "distance_m": leg.distance_m,
+                    "duration_minutes": leg.duration_minutes,
+                    "steps": [
+                        {
+                            "instruction": step.instruction,
+                            "road_name": step.road_name,
+                            "distance_m": step.distance_m,
+                            "duration_minutes": step.duration_minutes,
+                        }
+                        for step in leg.steps
+                    ],
+                }
+                for leg in route.legs
+            ],
+        },
+        "events": events,
+        "stops": [event for event in events if event["kind"] in stop_kinds],
+        "daily_logs": [
+            {
+                "date": log.date.isoformat(),
+                "trip_day": log.trip_day,
+                "start_location": _location_data(log.start_location),
+                "end_location": _location_data(log.end_location),
+                "distance_m": log.distance_m,
+                "totals_minutes": {
+                    "off_duty": log.off_duty_minutes,
+                    "sleeper_berth": log.sleeper_berth_minutes,
+                    "driving": log.driving_minutes,
+                    "on_duty_not_driving": log.on_duty_minutes,
+                },
+                "cycle": {
+                    "used_at_start_minutes": log.cycle_used_start_minutes,
+                    "added_minutes": log.cycle_added_minutes,
+                    "remaining_at_end_minutes": log.cycle_remaining_end_minutes,
+                },
+                "segments": [
+                    {
+                        "event_id": segment.event_id,
+                        "kind": segment.kind,
+                        "duty_status": segment.duty_status,
+                        "start_minute": segment.start_minute,
+                        "end_minute": segment.end_minute,
+                        "location": _location_data(segment.location),
+                        "remark": segment.remark,
+                    }
+                    for segment in log.segments
+                ],
+            }
+            for log in result.daily_logs
+        ],
+    }

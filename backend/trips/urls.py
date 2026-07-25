@@ -1,6 +1,6 @@
 from django.urls import path
 
-from trips.views import HealthView, LocationSearchView
+from trips.views import HealthView, LocationSearchView, TripPlanView
 
 urlpatterns = [
     path("health/", HealthView.as_view(), name="health"),
@@ -9,4 +9,5 @@ urlpatterns = [
         LocationSearchView.as_view(),
         name="location-search",
     ),
+    path("trips/plan/", TripPlanView.as_view(), name="trip-plan"),
 ]

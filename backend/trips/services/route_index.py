@@ -29,6 +29,10 @@ class RouteIndex:
         self._cumulative = tuple(cumulative)
         self._geometry_distance = cumulative[-1]
 
+    @property
+    def distance_m(self) -> int:
+        return self._route.distance_m
+
     def coordinate_at(self, progress_m: int) -> Coordinate:
         if progress_m <= 0:
             return self._route.geometry[0]
