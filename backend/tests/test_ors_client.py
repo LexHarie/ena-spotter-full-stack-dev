@@ -15,6 +15,10 @@ def test_build_route_normalizes_geometry_legs_and_quarter_hours() -> None:
 
     def handler(request: httpx.Request) -> httpx.Response:
         assert request.headers["Authorization"] == "test-key"
+        assert (
+            str(request.url)
+            == "https://api.heigit.org/openrouteservice/v2/directions/driving-hgv/geojson"
+        )
         return httpx.Response(200, json=payload)
 
     client = OpenRouteServiceClient(
@@ -53,6 +57,8 @@ def test_search_locations_restricts_to_us_and_caps_results() -> None:
     }
 
     def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.host == "api.heigit.org"
+        assert request.url.path == "/pelias/v1/search"
         assert request.url.params["boundary.country"] == "US"
         return httpx.Response(200, json=payload)
 
@@ -62,6 +68,20 @@ def test_search_locations_restricts_to_us_and_caps_results() -> None:
     )
 
     assert len(client.search_locations("Chicago")) == 5
+
+
+def test_reverse_geocode_uses_heigit_pelias_endpoint() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.host == "api.heigit.org"
+        assert request.url.path == "/pelias/v1/reverse"
+        return httpx.Response(200, json={"features": []})
+
+    client = OpenRouteServiceClient(
+        "test-key",
+        transport=httpx.MockTransport(handler),
+    )
+
+    client.reverse_geocode(Coordinate(-87.6298, 41.8781))
 
 
 def test_provider_raises_typed_error_after_transient_failure() -> None:

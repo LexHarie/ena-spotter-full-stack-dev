@@ -15,7 +15,9 @@ from trips.domain.types import (
 )
 from trips.domain.units import ceil_minutes_to_quarter
 
-ORS_BASE_URL = "https://api.openrouteservice.org"
+HEIGIT_API_BASE_URL = "https://api.heigit.org"
+PELIAS_API_PREFIX = "/pelias/v1"
+ORS_API_PREFIX = "/openrouteservice/v2"
 
 
 @dataclass(frozen=True)
@@ -147,7 +149,7 @@ class OpenRouteServiceClient:
         transport: httpx.BaseTransport | None = None,
     ) -> None:
         self._client = httpx.Client(
-            base_url=ORS_BASE_URL,
+            base_url=HEIGIT_API_BASE_URL,
             headers={"Authorization": api_key},
             timeout=httpx.Timeout(12.0, connect=5.0),
             transport=transport,
@@ -209,7 +211,7 @@ class OpenRouteServiceClient:
     def search_locations(self, query: str) -> tuple[Location, ...]:
         payload = self._request(
             "GET",
-            "/geocode/search",
+            f"{PELIAS_API_PREFIX}/search",
             params={
                 "text": query,
                 "boundary.country": "US",
@@ -236,7 +238,7 @@ class OpenRouteServiceClient:
     ) -> NormalizedRoute:
         payload = self._request(
             "POST",
-            "/v2/directions/driving-hgv/geojson",
+            f"{ORS_API_PREFIX}/directions/driving-hgv/geojson",
             json={
                 "coordinates": [
                     [point.coordinate.longitude, point.coordinate.latitude] for point in waypoints
@@ -249,7 +251,7 @@ class OpenRouteServiceClient:
     def reverse_geocode(self, coordinate: Coordinate) -> Location:
         payload = self._request(
             "GET",
-            "/geocode/reverse",
+            f"{PELIAS_API_PREFIX}/reverse",
             params={
                 "point.lon": coordinate.longitude,
                 "point.lat": coordinate.latitude,
