@@ -12,6 +12,11 @@ from trips.domain.types import (
 
 PICKUP_MINUTES = 60
 DROPOFF_MINUTES = 60
+BREAK_AFTER_DRIVING_MINUTES = 8 * 60
+MAX_DRIVING_MINUTES = 11 * 60
+MAX_SHIFT_MINUTES = 14 * 60
+BREAK_MINUTES = 30
+DAILY_REST_MINUTES = 10 * 60
 
 
 class Scheduler:
@@ -22,6 +27,9 @@ class Scheduler:
         self.route_progress_m = 0
         self.cycle_used_minutes = request.cycle_used_minutes
         self.events: list[DutyEvent] = []
+        self.shift_elapsed_minutes = 0
+        self.shift_driving_minutes = 0
+        self.driving_since_break_minutes = 0
 
     def _append(
         self,
@@ -56,14 +64,69 @@ class Scheduler:
         self.route_progress_m = route_end_m
 
     def _drive_leg(self, leg: RouteLeg) -> None:
+        for step in leg.steps:
+            remaining_minutes = step.duration_minutes
+            remaining_distance_m = step.distance_m
+            while remaining_minutes:
+                if (
+                    self.shift_driving_minutes >= MAX_DRIVING_MINUTES
+                    or self.shift_elapsed_minutes >= MAX_SHIFT_MINUTES
+                ):
+                    self._take_daily_rest()
+                if self.driving_since_break_minutes >= BREAK_AFTER_DRIVING_MINUTES:
+                    self._take_break()
+
+                capacity = min(
+                    remaining_minutes,
+                    BREAK_AFTER_DRIVING_MINUTES - self.driving_since_break_minutes,
+                    MAX_DRIVING_MINUTES - self.shift_driving_minutes,
+                    MAX_SHIFT_MINUTES - self.shift_elapsed_minutes,
+                )
+                if capacity <= 0:
+                    continue
+                chunk_distance_m = (
+                    remaining_distance_m
+                    if capacity == remaining_minutes
+                    else (remaining_distance_m * capacity) // remaining_minutes
+                )
+                self._append(
+                    EventKind.DRIVING,
+                    DutyStatus.DRIVING,
+                    capacity,
+                    self.route_progress_m + chunk_distance_m,
+                    leg.start,
+                    step.instruction or f"Drive toward {leg.end.label}",
+                )
+                self.shift_elapsed_minutes += capacity
+                self.shift_driving_minutes += capacity
+                self.driving_since_break_minutes += capacity
+                remaining_minutes -= capacity
+                remaining_distance_m -= chunk_distance_m
+
+    def _take_break(self) -> None:
         self._append(
-            EventKind.DRIVING,
-            DutyStatus.DRIVING,
-            leg.duration_minutes,
-            self.route_progress_m + leg.distance_m,
-            leg.start,
-            f"Drive toward {leg.end.label}",
+            EventKind.BREAK,
+            DutyStatus.OFF_DUTY,
+            BREAK_MINUTES,
+            self.route_progress_m,
+            self.events[-1].location,
+            "30-minute break",
         )
+        self.shift_elapsed_minutes += BREAK_MINUTES
+        self.driving_since_break_minutes = 0
+
+    def _take_daily_rest(self) -> None:
+        self._append(
+            EventKind.DAILY_REST,
+            DutyStatus.SLEEPER_BERTH,
+            DAILY_REST_MINUTES,
+            self.route_progress_m,
+            self.events[-1].location,
+            "10-hour sleeper-berth rest",
+        )
+        self.shift_elapsed_minutes = 0
+        self.shift_driving_minutes = 0
+        self.driving_since_break_minutes = 0
 
     def _service(
         self,
@@ -80,6 +143,9 @@ class Scheduler:
             location,
             remark,
         )
+        self.shift_elapsed_minutes += duration_minutes
+        if duration_minutes >= BREAK_MINUTES:
+            self.driving_since_break_minutes = 0
 
     def build(self) -> tuple[DutyEvent, ...]:
         first_leg, second_leg = self.route.legs
