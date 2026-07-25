@@ -37,12 +37,13 @@ regenerate it after intentionally changing the production backend target.
   <https://frontend-mauve-seven-o9w0db8gnf.vercel.app>
 - Django backend:
   <https://backend-ten-iota-57.vercel.app>
-- Deployment smoke timestamp: `2026-07-25T14:22:24Z`
+- Deployment smoke timestamp: `2026-07-25T14:51:08Z`
 - Passed: frontend HTML, direct and same-origin health checks, production
   desktop and mobile rendering, retryable provider-error UI, and frontend
-  secret scan.
-- Pending provider recovery: OpenRouteService returned upstream `502` and
-  timed out for both geocoding and `driving-hgv` directions at the smoke
-  timestamp. Consequently, live autocomplete, route results, and Print Preview
-  could not be re-verified against the public provider in this deployment run.
+  secret scan. The backend now uses HeiGIT's current `/pelias/v1` geocoding and
+  `/openrouteservice/v2` directions endpoints.
+- Pending fresh provider credential: the supplied API key times out when used
+  directly against `api.heigit.org`, with both header and query-parameter
+  authentication. Consequently, live autocomplete, route results, and Print
+  Preview still require a final smoke test after replacing `ORS_API_KEY`.
   Deterministic Chromium coverage for the complete flow remains green.
