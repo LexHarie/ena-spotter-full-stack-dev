@@ -1,0 +1,420 @@
+{
+  "meta": {
+    "generated_at": "2026-07-25T11:00:00+00:00",
+    "rule_set_version": "property-70-8-v1",
+    "home_terminal_timezone": "America/Chicago",
+    "fixed_utc_offset_minutes": -300,
+    "assumptions": [
+      "Solo property-carrying driver",
+      "70 hours in 8 days"
+    ],
+    "warnings": []
+  },
+  "summary": {
+    "starts_at": "2026-07-25T06:00:00-05:00",
+    "ends_at": "2026-07-25T19:30:00-05:00",
+    "distance_m": 1030000,
+    "distance_miles": "640.00",
+    "driving_minutes": 660,
+    "on_duty_not_driving_minutes": 120,
+    "off_duty_minutes": 30,
+    "sleeper_berth_minutes": 0,
+    "total_duration_minutes": 810,
+    "cycle_used_start_minutes": 1440,
+    "cycle_used_end_minutes": 2220,
+    "cycle_restarts": 0,
+    "log_days": 1,
+    "fuel_stops": 0,
+    "rest_stops": 0
+  },
+  "route": {
+    "bounds": {
+      "west": -95.9345,
+      "south": 38.627,
+      "east": -87.6298,
+      "north": 41.8781
+    },
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [
+        [-87.6298, 41.8781],
+        [-90.1994, 38.627],
+        [-95.9345, 41.2565]
+      ]
+    },
+    "legs": [
+      {
+        "from": {
+          "id": "current",
+          "label": "Chicago, IL, USA",
+          "longitude": -87.6298,
+          "latitude": 41.8781,
+          "country_code": "US"
+        },
+        "to": {
+          "id": "pickup",
+          "label": "St. Louis, MO, USA",
+          "longitude": -90.1994,
+          "latitude": 38.627,
+          "country_code": "US"
+        },
+        "distance_m": 480000,
+        "duration_minutes": 240,
+        "steps": [
+          {
+            "instruction": "Continue southwest toward St. Louis",
+            "road_name": "I-55 S",
+            "distance_m": 480000,
+            "duration_minutes": 240
+          }
+        ]
+      },
+      {
+        "from": {
+          "id": "pickup",
+          "label": "St. Louis, MO, USA",
+          "longitude": -90.1994,
+          "latitude": 38.627,
+          "country_code": "US"
+        },
+        "to": {
+          "id": "dropoff",
+          "label": "Omaha, NE, USA",
+          "longitude": -95.9345,
+          "latitude": 41.2565,
+          "country_code": "US"
+        },
+        "distance_m": 550000,
+        "duration_minutes": 420,
+        "steps": [
+          {
+            "instruction": "Continue northwest toward Omaha",
+            "road_name": "I-29 N",
+            "distance_m": 550000,
+            "duration_minutes": 420
+          }
+        ]
+      }
+    ]
+  },
+  "events": [
+    {
+      "id": "drive-1",
+      "kind": "driving",
+      "duty_status": "driving",
+      "start_at": "2026-07-25T06:00:00-05:00",
+      "end_at": "2026-07-25T10:00:00-05:00",
+      "duration_minutes": 240,
+      "route_start_m": 0,
+      "route_end_m": 480000,
+      "location": {
+        "id": "current",
+        "label": "Chicago, IL, USA",
+        "longitude": -87.6298,
+        "latitude": 41.8781,
+        "country_code": "US"
+      },
+      "remark": "Drive toward St. Louis"
+    },
+    {
+      "id": "pickup",
+      "kind": "pickup",
+      "duty_status": "on_duty_not_driving",
+      "start_at": "2026-07-25T10:00:00-05:00",
+      "end_at": "2026-07-25T11:00:00-05:00",
+      "duration_minutes": 60,
+      "route_start_m": 480000,
+      "route_end_m": 480000,
+      "location": {
+        "id": "pickup",
+        "label": "St. Louis, MO, USA",
+        "longitude": -90.1994,
+        "latitude": 38.627,
+        "country_code": "US"
+      },
+      "remark": "Pickup"
+    },
+    {
+      "id": "drive-2",
+      "kind": "driving",
+      "duty_status": "driving",
+      "start_at": "2026-07-25T11:00:00-05:00",
+      "end_at": "2026-07-25T17:00:00-05:00",
+      "duration_minutes": 360,
+      "route_start_m": 480000,
+      "route_end_m": 960000,
+      "location": {
+        "id": "pickup",
+        "label": "St. Louis, MO, USA",
+        "longitude": -90.1994,
+        "latitude": 38.627,
+        "country_code": "US"
+      },
+      "remark": "Drive toward Omaha"
+    },
+    {
+      "id": "break",
+      "kind": "break",
+      "duty_status": "off_duty",
+      "start_at": "2026-07-25T17:00:00-05:00",
+      "end_at": "2026-07-25T17:30:00-05:00",
+      "duration_minutes": 30,
+      "route_start_m": 960000,
+      "route_end_m": 960000,
+      "location": {
+        "id": "break-location",
+        "label": "Council Bluffs, IA, USA",
+        "longitude": -95.8608,
+        "latitude": 41.2619,
+        "country_code": "US"
+      },
+      "remark": "30-minute break"
+    },
+    {
+      "id": "drive-3",
+      "kind": "driving",
+      "duty_status": "driving",
+      "start_at": "2026-07-25T17:30:00-05:00",
+      "end_at": "2026-07-25T18:30:00-05:00",
+      "duration_minutes": 60,
+      "route_start_m": 960000,
+      "route_end_m": 1030000,
+      "location": {
+        "id": "break-location",
+        "label": "Council Bluffs, IA, USA",
+        "longitude": -95.8608,
+        "latitude": 41.2619,
+        "country_code": "US"
+      },
+      "remark": "Drive toward Omaha"
+    },
+    {
+      "id": "dropoff",
+      "kind": "dropoff",
+      "duty_status": "on_duty_not_driving",
+      "start_at": "2026-07-25T18:30:00-05:00",
+      "end_at": "2026-07-25T19:30:00-05:00",
+      "duration_minutes": 60,
+      "route_start_m": 1030000,
+      "route_end_m": 1030000,
+      "location": {
+        "id": "dropoff",
+        "label": "Omaha, NE, USA",
+        "longitude": -95.9345,
+        "latitude": 41.2565,
+        "country_code": "US"
+      },
+      "remark": "Drop-off"
+    }
+  ],
+  "stops": [
+    {
+      "id": "pickup",
+      "kind": "pickup",
+      "duty_status": "on_duty_not_driving",
+      "start_at": "2026-07-25T10:00:00-05:00",
+      "end_at": "2026-07-25T11:00:00-05:00",
+      "duration_minutes": 60,
+      "route_start_m": 480000,
+      "route_end_m": 480000,
+      "location": {
+        "id": "pickup",
+        "label": "St. Louis, MO, USA",
+        "longitude": -90.1994,
+        "latitude": 38.627,
+        "country_code": "US"
+      },
+      "remark": "Pickup"
+    },
+    {
+      "id": "break",
+      "kind": "break",
+      "duty_status": "off_duty",
+      "start_at": "2026-07-25T17:00:00-05:00",
+      "end_at": "2026-07-25T17:30:00-05:00",
+      "duration_minutes": 30,
+      "route_start_m": 960000,
+      "route_end_m": 960000,
+      "location": {
+        "id": "break-location",
+        "label": "Council Bluffs, IA, USA",
+        "longitude": -95.8608,
+        "latitude": 41.2619,
+        "country_code": "US"
+      },
+      "remark": "30-minute break"
+    },
+    {
+      "id": "dropoff",
+      "kind": "dropoff",
+      "duty_status": "on_duty_not_driving",
+      "start_at": "2026-07-25T18:30:00-05:00",
+      "end_at": "2026-07-25T19:30:00-05:00",
+      "duration_minutes": 60,
+      "route_start_m": 1030000,
+      "route_end_m": 1030000,
+      "location": {
+        "id": "dropoff",
+        "label": "Omaha, NE, USA",
+        "longitude": -95.9345,
+        "latitude": 41.2565,
+        "country_code": "US"
+      },
+      "remark": "Drop-off"
+    }
+  ],
+  "daily_logs": [
+    {
+      "date": "2026-07-25",
+      "trip_day": 1,
+      "start_location": {
+        "id": "current",
+        "label": "Chicago, IL, USA",
+        "longitude": -87.6298,
+        "latitude": 41.8781,
+        "country_code": "US"
+      },
+      "end_location": {
+        "id": "dropoff",
+        "label": "Omaha, NE, USA",
+        "longitude": -95.9345,
+        "latitude": 41.2565,
+        "country_code": "US"
+      },
+      "distance_m": 1030000,
+      "totals_minutes": {
+        "off_duty": 660,
+        "sleeper_berth": 0,
+        "driving": 660,
+        "on_duty_not_driving": 120
+      },
+      "cycle": {
+        "used_at_start_minutes": 1440,
+        "added_minutes": 780,
+        "remaining_at_end_minutes": 1980
+      },
+      "segments": [
+        {
+          "event_id": "pre",
+          "kind": "pre_trip_off_duty",
+          "duty_status": "off_duty",
+          "start_minute": 0,
+          "end_minute": 360,
+          "location": {
+            "id": "current",
+            "label": "Chicago, IL, USA",
+            "longitude": -87.6298,
+            "latitude": 41.8781,
+            "country_code": "US"
+          },
+          "remark": "Off duty"
+        },
+        {
+          "event_id": "drive-1",
+          "kind": "driving",
+          "duty_status": "driving",
+          "start_minute": 360,
+          "end_minute": 600,
+          "location": {
+            "id": "current",
+            "label": "Chicago, IL, USA",
+            "longitude": -87.6298,
+            "latitude": 41.8781,
+            "country_code": "US"
+          },
+          "remark": "Drive toward St. Louis"
+        },
+        {
+          "event_id": "pickup",
+          "kind": "pickup",
+          "duty_status": "on_duty_not_driving",
+          "start_minute": 600,
+          "end_minute": 660,
+          "location": {
+            "id": "pickup",
+            "label": "St. Louis, MO, USA",
+            "longitude": -90.1994,
+            "latitude": 38.627,
+            "country_code": "US"
+          },
+          "remark": "Pickup"
+        },
+        {
+          "event_id": "drive-2",
+          "kind": "driving",
+          "duty_status": "driving",
+          "start_minute": 660,
+          "end_minute": 1020,
+          "location": {
+            "id": "pickup",
+            "label": "St. Louis, MO, USA",
+            "longitude": -90.1994,
+            "latitude": 38.627,
+            "country_code": "US"
+          },
+          "remark": "Drive toward Omaha"
+        },
+        {
+          "event_id": "break",
+          "kind": "break",
+          "duty_status": "off_duty",
+          "start_minute": 1020,
+          "end_minute": 1050,
+          "location": {
+            "id": "break-location",
+            "label": "Council Bluffs, IA, USA",
+            "longitude": -95.8608,
+            "latitude": 41.2619,
+            "country_code": "US"
+          },
+          "remark": "30-minute break"
+        },
+        {
+          "event_id": "drive-3",
+          "kind": "driving",
+          "duty_status": "driving",
+          "start_minute": 1050,
+          "end_minute": 1110,
+          "location": {
+            "id": "break-location",
+            "label": "Council Bluffs, IA, USA",
+            "longitude": -95.8608,
+            "latitude": 41.2619,
+            "country_code": "US"
+          },
+          "remark": "Drive toward Omaha"
+        },
+        {
+          "event_id": "dropoff",
+          "kind": "dropoff",
+          "duty_status": "on_duty_not_driving",
+          "start_minute": 1110,
+          "end_minute": 1170,
+          "location": {
+            "id": "dropoff",
+            "label": "Omaha, NE, USA",
+            "longitude": -95.9345,
+            "latitude": 41.2565,
+            "country_code": "US"
+          },
+          "remark": "Drop-off"
+        },
+        {
+          "event_id": "post",
+          "kind": "post_trip_off_duty",
+          "duty_status": "off_duty",
+          "start_minute": 1170,
+          "end_minute": 1440,
+          "location": {
+            "id": "dropoff",
+            "label": "Omaha, NE, USA",
+            "longitude": -95.9345,
+            "latitude": 41.2565,
+            "country_code": "US"
+          },
+          "remark": "Off duty"
+        }
+      ]
+    }
+  ]
+}
