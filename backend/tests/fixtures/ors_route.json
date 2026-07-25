@@ -1,0 +1,47 @@
+{
+  "features": [
+    {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-87.6298, 41.8781],
+          [-89.0000, 40.5000],
+          [-90.1994, 38.6270],
+          [-101.0000, 36.0000],
+          [-112.0740, 33.4484]
+        ]
+      },
+      "properties": {
+        "summary": {"distance": 2816350.0, "duration": 91800.0},
+        "segments": [
+          {
+            "distance": 478100.0,
+            "duration": 16200.0,
+            "steps": [
+              {
+                "distance": 478100.0,
+                "duration": 16200.0,
+                "instruction": "Continue southwest to St. Louis",
+                "name": "I-55 S",
+                "way_points": [0, 2]
+              }
+            ]
+          },
+          {
+            "distance": 2338250.0,
+            "duration": 75600.0,
+            "steps": [
+              {
+                "distance": 2338250.0,
+                "duration": 75600.0,
+                "instruction": "Continue west to Phoenix",
+                "name": "I-40 W",
+                "way_points": [2, 4]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
