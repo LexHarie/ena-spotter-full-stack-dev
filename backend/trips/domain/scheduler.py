@@ -17,6 +17,10 @@ MAX_DRIVING_MINUTES = 11 * 60
 MAX_SHIFT_MINUTES = 14 * 60
 BREAK_MINUTES = 30
 DAILY_REST_MINUTES = 10 * 60
+MAX_CYCLE_MINUTES = 70 * 60
+CYCLE_RESTART_MINUTES = 34 * 60
+FUEL_INTERVAL_M = round(1000 * 1609.344)
+FUEL_MINUTES = 30
 
 
 class Scheduler:
@@ -30,6 +34,7 @@ class Scheduler:
         self.shift_elapsed_minutes = 0
         self.shift_driving_minutes = 0
         self.driving_since_break_minutes = 0
+        self.next_fuel_at_m = FUEL_INTERVAL_M
 
     def _append(
         self,
@@ -68,11 +73,18 @@ class Scheduler:
             remaining_minutes = step.duration_minutes
             remaining_distance_m = step.distance_m
             while remaining_minutes:
+                if self.cycle_used_minutes >= MAX_CYCLE_MINUTES:
+                    self._take_cycle_restart()
                 if (
                     self.shift_driving_minutes >= MAX_DRIVING_MINUTES
                     or self.shift_elapsed_minutes >= MAX_SHIFT_MINUTES
                 ):
                     self._take_daily_rest()
+                if (
+                    self.route_progress_m >= self.next_fuel_at_m
+                    and self.route_progress_m < self.route.distance_m
+                ):
+                    self._take_fuel_stop()
                 if self.driving_since_break_minutes >= BREAK_AFTER_DRIVING_MINUTES:
                     self._take_break()
 
@@ -81,7 +93,18 @@ class Scheduler:
                     BREAK_AFTER_DRIVING_MINUTES - self.driving_since_break_minutes,
                     MAX_DRIVING_MINUTES - self.shift_driving_minutes,
                     MAX_SHIFT_MINUTES - self.shift_elapsed_minutes,
+                    MAX_CYCLE_MINUTES - self.cycle_used_minutes,
                 )
+                distance_until_fuel = self.next_fuel_at_m - self.route_progress_m
+                if 0 < distance_until_fuel < remaining_distance_m:
+                    minutes_until_fuel = (
+                        remaining_minutes * distance_until_fuel
+                    ) // remaining_distance_m
+                    quarter_minutes = (minutes_until_fuel // 15) * 15
+                    if quarter_minutes == 0:
+                        self._take_fuel_stop()
+                        continue
+                    capacity = min(capacity, quarter_minutes)
                 if capacity <= 0:
                     continue
                 chunk_distance_m = (
@@ -128,6 +151,49 @@ class Scheduler:
         self.shift_driving_minutes = 0
         self.driving_since_break_minutes = 0
 
+    def _take_cycle_restart(self) -> None:
+        location = self.events[-1].location if self.events else self.request.current_location
+        self._append(
+            EventKind.CYCLE_RESTART,
+            DutyStatus.OFF_DUTY,
+            CYCLE_RESTART_MINUTES,
+            self.route_progress_m,
+            location,
+            "34-hour cycle restart",
+        )
+        self.cycle_used_minutes = 0
+        last = self.events[-1]
+        self.events[-1] = DutyEvent(
+            id=last.id,
+            kind=last.kind,
+            duty_status=last.duty_status,
+            start_at=last.start_at,
+            end_at=last.end_at,
+            route_start_m=last.route_start_m,
+            route_end_m=last.route_end_m,
+            location=last.location,
+            remark=last.remark,
+            cycle_used_before_minutes=last.cycle_used_before_minutes,
+            cycle_used_after_minutes=0,
+        )
+        self.shift_elapsed_minutes = 0
+        self.shift_driving_minutes = 0
+        self.driving_since_break_minutes = 0
+
+    def _take_fuel_stop(self) -> None:
+        location = self.events[-1].location
+        self._service(
+            EventKind.FUEL,
+            location,
+            FUEL_MINUTES,
+            "Fuel stop",
+        )
+        self.next_fuel_at_m = self.route_progress_m + FUEL_INTERVAL_M
+
+    def _ensure_cycle_capacity(self, required_minutes: int) -> None:
+        if self.cycle_used_minutes + required_minutes > MAX_CYCLE_MINUTES:
+            self._take_cycle_restart()
+
     def _service(
         self,
         kind: EventKind,
@@ -135,6 +201,7 @@ class Scheduler:
         duration_minutes: int,
         remark: str,
     ) -> None:
+        self._ensure_cycle_capacity(duration_minutes)
         self._append(
             kind,
             DutyStatus.ON_DUTY,
